@@ -14,6 +14,9 @@ import {
 import fs from 'mz/fs';
 import path from 'path';
 import * as borsh from 'borsh';
+import * as BufferLayout from "@solana/buffer-layout";
+import { Buffer } from 'buffer';
+
 
 import {getPayer, getRpcUrl, createKeypairFromFile} from './utils';
 
@@ -195,6 +198,53 @@ export async function checkProgram(): Promise<void> {
   }
 }
 
+//returns a buffer which is a byte array
+function createIncrementInstruction(): Buffer{
+  //we define the layout as a struct with a single value called instruction
+  const layout = BufferLayout.struct([BufferLayout.u8('instruction')]);
+  //now we must make the actual byte array that we will send accross the network
+  //this makes to byte array with a size acclocated of our loyout
+  const data = Buffer.alloc(layout.span);
+  //making layout masically made our struct now we have to populate it
+  // we set its instruction field to 0, we then pass in the buffer we would like to put it in , of course the buffer is of the right size
+  layout.encode({instruction: 0}, data);
+  //return the struct in bytes
+  return data;
+
+}
+function createDecrementInstruction(): Buffer{
+  //we define the layout as a struct with a single value called instruction
+  const layout = BufferLayout.struct([BufferLayout.u8('instruction')]);
+  //now we must make the actual byte array that we will send accross the network
+  //this makes to byte array with a size acclocated of our loyout
+  const data = Buffer.alloc(layout.span);
+  //making layout masically made our struct now we have to populate it
+  // we set its instruction field to 0, we then pass in the buffer we would like to put it in , of course the buffer is of the right size
+  layout.encode({instruction: 1}, data);
+  //return the struct in bytes
+  return data;
+}
+function createSetInstruction(setAmount: number): Buffer{
+  let maxU32 = Math.pow(2, 32) - 1;
+  if(setAmount > maxU32 || setAmount < 0){
+    throw 'Error: set instruction parameter out of range';
+  }
+  //we define the layout as a struct with a single value called instruction
+  const layout = BufferLayout.struct([
+    BufferLayout.u8('instruction'),
+    BufferLayout.u32('value')
+    ]);
+  //now we must make the actual byte array that we will send accross the network
+  //this makes to byte array with a size acclocated of our loyout
+  const data = Buffer.alloc(layout.span);
+  //making layout masically made our struct now we have to populate it
+  // we set its instruction field to 0, we then pass in the buffer we would like to put it in , of course the buffer is of the right size
+  layout.encode({instruction: 2, value: setAmount}, data);
+  //return the struct in bytes
+  return data;
+
+}
+
 /**
  * Say hello
  */
@@ -203,7 +253,7 @@ export async function sayHello(): Promise<void> {
   const instruction = new TransactionInstruction({
     keys: [{pubkey: greetedPubkey, isSigner: false, isWritable: true}],
     programId,
-    data: Buffer.alloc(0), // All instructions are hellos
+    data: createDecrementInstruction(), //could be one of the other istructions as well
   });
   await sendAndConfirmTransaction(
     connection,
