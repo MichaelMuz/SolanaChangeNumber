@@ -1,1 +1,1 @@
-Solana smart contract. Augmented Solana hello world program that includes 3 instructions: increment, decriment, and a set instruction to set it to a number. Has front end, smart contract, and a few tests
+Solana smart contract. Augmented Solana hello world program that includes 3 instructions: increment, decrement, and a set instruction to set it to a number passed in by the user. Has front end, smart contract, and a few tests.
