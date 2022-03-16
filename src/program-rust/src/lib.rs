@@ -84,7 +84,24 @@ mod test {
             false,
             Epoch::default(),
         );
-        let instruction_data: Vec<u8> = Vec::new();
+        //0 - increment
+        //1 - decrement
+        //2 - set
+        //  1-4 -> u32 little endian
+        // [2, 100, 0, 0, 0]
+
+        //this will return an array of u8 of length 2
+        let arr = u32::to_le_bytes(100);
+        //this will create an array of length 5 with each value set to 2
+        let mut instruction_data = [2; 5];
+        //we keep the first one as 2, the set instruction, the rest is the 100 for what to set it to
+        for i in 1..5{
+            instruction_data[i] = arr[i - 1];
+        }
+        //^[2, 100, 0, 0, 0]
+
+
+        
 
         let accounts = vec![account];
 
@@ -99,14 +116,78 @@ mod test {
             GreetingAccount::try_from_slice(&accounts[0].data.borrow())
                 .unwrap()
                 .counter,
-            1
+            100
+        );
+        //here we set the instrucctions to be all 0 and now it is an increment instruction
+        let instruction_data = [0; 5];
+        process_instruction(&program_id, &accounts, &instruction_data).unwrap();
+        assert_eq!(
+            GreetingAccount::try_from_slice(&accounts[0].data.borrow())
+                .unwrap()
+                .counter,
+            101
+        );
+    }
+    #[test]
+    #[should_panic]
+    fn test_sub_from_zero() {
+        let program_id = Pubkey::default();
+        let key = Pubkey::default();
+        let mut lamports = 0;
+        let mut data = vec![0; mem::size_of::<u32>()];
+        let owner = Pubkey::default();
+        let account = AccountInfo::new(
+            &key,
+            false,
+            true,
+            &mut lamports,
+            &mut data,
+            &owner,
+            false,
+            Epoch::default(),
+        );
+        //0 - increment
+        //1 - decrement
+        //2 - set
+        //  1-4 -> u32 little endian
+        // [2, 100, 0, 0, 0]
+
+        //this will return an array of u8 of length 2
+        let arr = u32::to_le_bytes(100);
+        //this will create an array of length 5 with each value set to 2
+        let mut instruction_data = [1; 5];
+        //we keep the first one as 2, the set instruction, the rest is the 100 for what to set it to
+        for i in 1..5{
+            instruction_data[i] = arr[i - 1];
+        }
+        //^[2, 100, 0, 0, 0]
+
+
+        
+
+        let accounts = vec![account];
+
+        assert_eq!(
+            GreetingAccount::try_from_slice(&accounts[0].data.borrow())
+                .unwrap()
+                .counter,
+            0
         );
         process_instruction(&program_id, &accounts, &instruction_data).unwrap();
         assert_eq!(
             GreetingAccount::try_from_slice(&accounts[0].data.borrow())
                 .unwrap()
                 .counter,
-            2
+            100
+        );
+        //here we set the instrucctions to be all 0 and now it is an increment instruction
+        let instruction_data = [0; 5];
+        process_instruction(&program_id, &accounts, &instruction_data).unwrap();
+        assert_eq!(
+            GreetingAccount::try_from_slice(&accounts[0].data.borrow())
+                .unwrap()
+                .counter,
+            101
         );
     }
 }
